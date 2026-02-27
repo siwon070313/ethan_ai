@@ -115,13 +115,19 @@ def extract_memory_from_text(text: str):
     return None
 
 def build_reply(user_text: str, mem: list):
-    # 메모리를 살짝 반영하는 간단한 답변(데모)
     hint = ""
     if mem:
         hint = f"(내가 기억하는 너의 단서: {mem[-1]})\n"
 
-    # 기본 공감 톤
-    return hint + "응, 듣고 있어. 지금 어떤 얘기부터 해볼까? 편하게 말해줘."
+    # 감정 반응 추가
+    if "스트레스" in user_text:
+        return hint + "오늘 스트레스 많이 받았구나. 어떤 일 때문에 그렇게 느꼈어?"
+    if "힘들" in user_text:
+        return hint + "많이 힘들어 보이네… 무슨 일이 있었는지 말해줄래?"
+    if "먹었" in user_text:
+        return hint + "오늘 뭐 먹었는지 궁금했어. 맛있었어?"
+
+    return hint + "응, 듣고 있어. 오늘은 어떤 얘기부터 해볼까?"
 
 @app.get("/")
 def home():
