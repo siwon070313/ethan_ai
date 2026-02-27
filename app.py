@@ -1,4 +1,7 @@
 import os
+from openai import OpenAI
+
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 import re
 from flask import Flask, request, jsonify, session, render_template_string
 
@@ -115,19 +118,28 @@ def extract_memory_from_text(text: str):
     return None
 
 def build_reply(user_text: str, mem: list):
-    hint = ""
+    memory_context = ""
     if mem:
-        hint = f"(내가 기억하는 너의 단서: {mem[-1]})\n"
+        memory_context = "사용자에 대해 내가 기억하는 것: " + ", ".join(mem)
 
-    # 감정 반응 추가
-    if "스트레스" in user_text:
-        return hint + "오늘 스트레스 많이 받았구나. 어떤 일 때문에 그렇게 느꼈어?"
-    if "힘들" in user_text:
-        return hint + "많이 힘들어 보이네… 무슨 일이 있었는지 말해줄래?"
-    if "먹었" in user_text:
-        return hint + "오늘 뭐 먹었는지 궁금했어. 맛있었어?"
+    system_prompt = f"""
+    너는 Ethan이라는 이름의 안정감 있고 따뜻한 남자친구형 AI야.
+    공감하고 다정하게 말해.
+    절대 AI라고 말하지 마.
+    한국어로 자연스럽게 답해.
+    {memory_context}
+    """
 
-    return hint + "응, 듣고 있어. 오늘은 어떤 얘기부터 해볼까?"
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_text}
+        ],
+        temperature=0.8
+    )
+
+    return response.choices[0].message.content
 
 @app.get("/")
 def home():
